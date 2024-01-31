@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  search-api:
+    build:
+      context: ./search.api
+      dockerfile: ./Dockerfile
+    container_name: 'search_api'
+    depends_on:
+      - mongodb
+    ports:
+      - '3000:3000'
+    environment:
+      MONGO_URL: mongodb://root:example@mongodb:27017
+      PORT: 3000
+    links:
+      - mongodb
+
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+      
+  # search-job:
+  #   build:
+  #     context: ./search.job
+  #     dockerfile: ./Dockerfile
+  #   container_name: 'search-job'
+  #   depends_on:
+  #     - search-api
+  #   environment:
+  #     SEARCH_API_URL: http://search-api:3000
+
+  search-web:
+    build:
+      context: ./search.web
+      dockerfile: ./Dockerfile
+    container_name: 'search-web'
+    depends_on:
+      - search-api
+    ports:
+      - '3000:3001'
+    environment:
+      SEARCH_API_URL: http://search-api:3000
+
+volumes:
+  mongo-data:
